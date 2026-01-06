@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.store.productservice.web.ProductControllerJsonTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.931 s -- in com.store.productservice.web.ProductControllerJsonTest

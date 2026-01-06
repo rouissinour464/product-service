@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modifier le produit — Store Cosmétiques</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<header class="navbar">
+  <div class="brand">
+    <div class="logo">🧴</div>
+    <div>
+      <div class="title">Modifier le produit</div>
+      <small>Mets à jour les infos du produit</small>
+    </div>
+  </div>
+</header>
+<main class="page">
+  <section class="card">
+    <div class="card-header">
+      <div class="card-title">Édition</div>
+      <div class="card-actions"><a class="btn secondary" th:href="@{/}">← Retour catalogue</a></div>
+    </div>
+    <div class="card-body">
+      <form th:action="@{'/products/' + ${id}}" th:object="${product}" method="post">
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Nom</label>
+            <input class="input" type="text" th:field="*{nom}" />
+            <small class="muted" th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}"></small>
+          </div>
+          <div class="form-row">
+            <label>Prix (€)</label>
+            <input class="input" type="number" step="0.01" min="0" th:field="*{prix}" />
+            <small class="muted" th:if="${#fields.hasErrors('prix')}" th:errors="*{prix}"></small>
+          </div>
+          <div class="form-row">
+            <label>Quantité</label>
+            <input class="input" type="number" min="0" th:field="*{quantite}" />
+            <small class="muted" th:if="${#fields.hasErrors('quantite')}" th:errors="*{quantite}"></small>
+          </div>
+          <div class="form-row">
+            <label>Date de création</label>
+            <input class="input" type="datetime-local" th:field="*{dateCreation}" th:value="${now}" th:attr="max=${now}" placeholder="aaaa-mm-jjThh:mm" />
+            <small class="muted" th:if="${#fields.hasErrors('dateCreation')}" th:errors="*{dateCreation}"></small>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Mettre à jour</button>
+          <a class="btn secondary" th:href="@{/}">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </section>
+  <div class="footer">© 2026 Store Cosmétiques</div>
+</main>
+</body>
+</html>

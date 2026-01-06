@@ -1,0 +1,10 @@
+com\store\productservice\dto\ProductRequest.class
+com\store\productservice\dto\ProductResponse.class
+com\store\productservice\entity\Product.class
+com\store\productservice\service\ProductService.class
+com\store\productservice\repository\ProductRepository.class
+com\store\productservice\controller\ProductController.class
+com\store\productservice\exception\GlobalExceptionHandler.class
+com\store\productservice\exception\ResourceNotFoundException.class
+com\store\productservice\ProductServiceApplication.class
+com\store\productservice\web\PageController.class

@@ -1,0 +1,40 @@
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: products-postgres
+    environment:
+      POSTGRES_DB: products_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"             # accès local -> localhost:5433
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d products_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  product-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: db               # le nom du service docker
+      DB_PORT: "5432"
+      DB_NAME: products_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      SERVER_PORT: "8080"       # l'app écoutera en 8080 dans le conteneur
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:8080"             # accès local -> http://localhost:8081
+
+volumes:
+  pgdata:
