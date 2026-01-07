@@ -1,0 +1,95 @@
+
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "nour292/product-service"   // Nom de ton image Docker
+        TAG = "latest"
+        DOCKERHUB_CREDS = "dockerhub-creds"      // ID des credentials DockerHub dans Jenkins
+        SLACK_CHANNEL = "#nouveau-canal"         // Ton canal Slack
+        SLACK_CREDENTIALS = "slack-bot-token"    // ID du token Slack (Bot OAuth Token)
+    }
+
+    triggers {
+        cron('H/5 * * * *') // Vérifie toutes les 5 minutes (optionnel)
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                // Récupération du code depuis ton repo GitHub
+                git branch: 'main', url: 'https://github.com/rouissinour464/product-service.git'
+            }
+        }
+
+        stage('Build Maven') {
+            steps {
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKERHUB_CREDS}",
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    sh '''
+                        echo "Connexion à DockerHub..."
+                        echo "$PASS" | docker login -u "$USER" --password-stdin
+
+                        echo "Construction de l'image Docker..."
+                        docker build -t ${IMAGE_NAME}:${TAG} .
+
+                        echo "Push de l'image vers DockerHub..."
+                        docker push ${IMAGE_NAME}:${TAG}
+
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                    echo "Déploiement du conteneur..."
+                    docker ps -a --format '{{.Names}}' | grep -w product-service && docker rm -f product-service || true
+
+                    docker run -d --name product-service \
+                      -p 8081:9090 \
+                      -e DB_HOST=host.docker.internal \
+                      -e DB_PORT=5433 \
+                      -e DB_NAME=products_db \
+                      -e DB_USER=postgres \
+                      -e DB_PASSWORD=postgres \
+                      ${IMAGE_NAME}:${TAG}
+                '''
+            }
+        }
+
+        stage('Slack Notification') {
+            steps {
+                slackSend(
+                    channel: "${SLACK_CHANNEL}",
+                    color: 'good',
+                    message: "✅ Pipeline réussi : Image ${IMAGE_NAME}:${TAG} buildée, poussée et déployée !",
+                    tokenCredentialId: "${SLACK_CREDENTIALS}"
+                )
+            }
+        }
+    }
+
+    post {
+        failure {
+            slackSend(
+                channel: "${SLACK_CHANNEL}",
+                color: 'danger',
+                message: "❌ Pipeline échoué pour le projet ${IMAGE_NAME} !",
+                tokenCredentialId: "${SLACK_CREDENTIALS}"
+            )
+        }
+    }
+}
