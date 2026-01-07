@@ -17,7 +17,8 @@ pipeline {
 
     options {
         timestamps()
-        ansiColor('xterm')
+        // Wrapper AnsiColor via 'wrap' (compatible avec ta version/plugins)
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm'])
     }
 
     stages {
@@ -31,10 +32,11 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                // Utilise le wrapper Maven du projet si présent (mvnw)
+                // Utilise le wrapper Maven du projet si présent (mvnw), sinon mvn
                 sh './mvnw -v || mvn -v'
                 sh './mvnw clean package -DskipTests || mvn clean package -DskipTests'
-                // Si tu veux forcer une installation de dépendances: ./mvnw -B -U -e clean package -DskipTests
+                // Variante plus stricte:
+                // sh './mvnw -B -U -e clean package -DskipTests || mvn -B -U -e clean package -DskipTests'
             }
         }
 
