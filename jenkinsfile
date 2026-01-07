@@ -17,7 +17,7 @@ pipeline {
 
     options {
         timestamps()
-        // (pas de wrap/ansiColor ici)
+        // (pas d'ansiColor/wrap ici car non supporté en option par ta version/plugins)
     }
 
     stages {
@@ -35,7 +35,7 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Docker Build & Push') { // <-- plus de &amp;
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: "${DOCKERHUB_CREDS}",
@@ -81,24 +81,30 @@ pipeline {
 
         stage('Slack Notification') {
             steps {
-                slackSend(
-                    channel: "${SLACK_CHANNEL}",
-                    color: 'good',
-                    message: "✅ Pipeline réussi : Image ${IMAGE_NAME}:${TAG} buildée, poussée et déployée !",
-                    tokenCredentialId: "${SLACK_CREDENTIALS}"
-                )
+                script {
+                    slackSend(
+                        channel: "${SLACK_CHANNEL}",
+                        color: 'good',
+                        message: "✅ Pipeline réussi : Image ${IMAGE_NAME}:${TAG} buildée, poussée et déployée !",
+                        tokenCredentialId: "${SLACK_CREDENTIALS}",
+                        failOnError: false   // ne bloque pas le pipeline si Slack retourne un code non-zéro
+                    )
+                }
             }
         }
     }
 
     post {
         failure {
-            slackSend(
-                channel: "${SLACK_CHANNEL}",
-                color: 'danger',
-                message: "❌ Pipeline échoué pour le projet ${IMAGE_NAME} !",
-                tokenCredentialId: "${SLACK_CREDENTIALS}"
-            )
+            script {
+                slackSend(
+                    channel: "${SLACK_CHANNEL}",
+                    color: 'danger',
+                    message: "❌ Pipeline échoué pour le projet ${IMAGE_NAME} !",
+                    tokenCredentialId: "${SLACK_CREDENTIALS}",
+                    failOnError: false
+                )
+            }
         }
     }
 }
