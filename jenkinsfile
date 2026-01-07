@@ -17,26 +17,21 @@ pipeline {
 
     options {
         timestamps()
-        // Wrapper AnsiColor via 'wrap' (compatible avec ta version/plugins)
-        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm'])
+        // (pas de wrap/ansiColor ici)
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                // Récupération du code depuis ton repo GitHub
                 git branch: 'main', url: 'https://github.com/rouissinour464/product-service.git'
             }
         }
 
         stage('Build Maven') {
             steps {
-                // Utilise le wrapper Maven du projet si présent (mvnw), sinon mvn
                 sh './mvnw -v || mvn -v'
                 sh './mvnw clean package -DskipTests || mvn clean package -DskipTests'
-                // Variante plus stricte:
-                // sh './mvnw -B -U -e clean package -DskipTests || mvn -B -U -e clean package -DskipTests'
             }
         }
 
