@@ -3,24 +3,22 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "nour292/product-service"   // Nom de ton image Docker
-        TAG = "latest"
-        DOCKERHUB_CREDS = "dockerhub-creds"      // ID des credentials DockerHub dans Jenkins
-        SLACK_CHANNEL = "#nouveau-canal"         // Ton canal Slack
-        SLACK_CREDENTIALS = "slack-bot-token"    // ID du token Slack (Bot OAuth Token)
+        IMAGE_NAME        = "nour292/product-service"   // Nom de ton image Docker
+        TAG               = "latest"
+        DOCKERHUB_CREDS   = "dockerhub-creds"           // ID des credentials DockerHub dans Jenkins
+        SLACK_CHANNEL     = "#nouveau-canal"            // Ton canal Slack
+        SLACK_CREDENTIALS = "slack-bot-token"           // ID du token Slack (Bot OAuth Token)
     }
 
     triggers {
-        cron('H/5 * * * *') // Vérifie toutes les 5 minutes (optionnel)
+        // Vérifie toutes les 5 minutes (optionnel). Attention: cron + SCM polling simultané peut être redondant.
+        cron('H/5 * * * *')
     }
 
-stage('Build Maven') {
-  steps {
-    sh 'mvn clean package -DskipTests'
-    // ou avec Tool:
-    // withMaven(maven: 'M3') { sh 'mvn clean package -DskipTests' }
-  }
-}
+    options {
+        timestamps()
+        ansiColor('xterm')
+    }
 
     stages {
 
@@ -33,7 +31,10 @@ stage('Build Maven') {
 
         stage('Build Maven') {
             steps {
-                sh './mvnw clean package -DskipTests'
+                // Utilise le wrapper Maven du projet si présent (mvnw)
+                sh './mvnw -v || mvn -v'
+                sh './mvnw clean package -DskipTests || mvn clean package -DskipTests'
+                // Si tu veux forcer une installation de dépendances: ./mvnw -B -U -e clean package -DskipTests
             }
         }
 
@@ -64,8 +65,11 @@ stage('Build Maven') {
             steps {
                 sh '''
                     echo "Déploiement du conteneur..."
+
+                    # Arrêt/suppression précédente si elle existe
                     docker ps -a --format '{{.Names}}' | grep -w product-service && docker rm -f product-service || true
 
+                    # Démarrage
                     docker run -d --name product-service \
                       -p 8081:9090 \
                       -e DB_HOST=host.docker.internal \
