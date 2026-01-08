@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME        = "nour292/product-service"   // Nom de ton image Docker
+        IMAGE_NAME        = "nour292/product-service"   // Nom de l'image Docker
         TAG               = "latest"
         DOCKERHUB_CREDS   = "dockerhub-creds"           // ID des credentials DockerHub dans Jenkins
         SLACK_CHANNEL     = "#nouveau-canal"            // Ton canal Slack
@@ -11,13 +11,12 @@ pipeline {
     }
 
     triggers {
-        // Vérifie toutes les 5 minutes (optionnel). Attention: cron + SCM polling simultané peut être redondant.
+        // Vérifie toutes les 15 minutes
         cron('H/15 * * * *')
     }
 
     options {
         timestamps()
-        // (pas d'ansiColor/wrap ici car non supporté en option par ta version/plugins)
     }
 
     stages {
@@ -35,7 +34,7 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Push') { // <-- plus de &amp;
+        stage('Docker Build & Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: "${DOCKERHUB_CREDS}",
@@ -66,9 +65,9 @@ pipeline {
                     # Arrêt/suppression précédente si elle existe
                     docker ps -a --format '{{.Names}}' | grep -w product-service && docker rm -f product-service || true
 
-                    # Démarrage
+                    # Démarrage (⚠️ Vérifie le port interne de ton app : 8080 ou 9090)
                     docker run -d --name product-service \
-                      -p 8081:9090 \
+                      -p 8081:8080 \
                       -e DB_HOST=host.docker.internal \
                       -e DB_PORT=5433 \
                       -e DB_NAME=products_db \
@@ -87,7 +86,7 @@ pipeline {
                         color: 'good',
                         message: "✅ Pipeline réussi : Image ${IMAGE_NAME}:${TAG} buildée, poussée et déployée !",
                         tokenCredentialId: "${SLACK_CREDENTIALS}",
-                        failOnError: false   // ne bloque pas le pipeline si Slack retourne un code non-zéro
+                        failOnError: false
                     )
                 }
             }
