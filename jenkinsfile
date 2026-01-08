@@ -12,7 +12,7 @@ pipeline {
 
     triggers {
         // Vérifie toutes les 5 minutes (optionnel). Attention: cron + SCM polling simultané peut être redondant.
-        cron('H/5 * * * *')
+        cron('H/15 * * * *')
     }
 
     options {
